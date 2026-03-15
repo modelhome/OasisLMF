@@ -1,0 +1,91 @@
+name        = "oasislmf"
+description = "Applies the OasisLMF Financial Module (FM) to CLIMADA ground-up hurricane losses. Converts an event loss table into insured loss distributions by applying policy terms (coverage fraction, per-occurrence deductible, per-occurrence limit). Outputs an insured Average Annual Loss and exceedance probability curve suitable for catastrophe bond pricing with FinancePy."
+image       = "model-home/oasislmf:latest"
+
+run  = "docker run --rm -v \"$PWD/run:/run\" ${IMAGE} ${ARGS} > run/insured_losses.output.json"
+args = ["{input:hurricane_losses}"]
+
+# ---------------------------------------------------------------------------
+# Input: hurricane_losses
+# The full JSON output from the CLIMADA step (hurricane_losses.output.json).
+# An optional "policy" block may be added to the file to override FM defaults:
+#   policy.total_insured_value_usd   — insured TIV (default: 25% of exposed value)
+#   policy.coverage_pct              — coverage fraction, 0-1 (default: 1.0)
+#   policy.deductible_pct            — per-occurrence deductible fraction (default: 0.05)
+#   policy.per_occurrence_limit_pct  — per-event limit as fraction of TIV (default: 0.25)
+# ---------------------------------------------------------------------------
+[[inputs]]
+name        = "hurricane_losses"
+description = "CLIMADA hurricane loss output: event loss table, EP curve, and exposure metadata"
+
+[inputs.schema]
+type     = "object"
+required = ["event_loss_table", "total_exposed_value_usd"]
+
+properties.scenario.type                    = "string"
+properties.storm_category.type              = "integer"
+properties.total_exposed_value_usd.type     = "number"
+properties.total_exposed_value_usd.description = "Total economic value of exposed assets from CLIMADA (USD)"
+properties.aai_agg_usd.type                 = "number"
+properties.loss_ratio.type                  = "number"
+
+properties.event_loss_table.type            = "array"
+properties.event_loss_table.description     = "Per-event ground-up losses with annual frequencies from CLIMADA"
+
+properties.loss_exceedance_curve.type       = "object"
+properties.loss_exceedance_curve.description = "Ground-up EP curve from CLIMADA (passed through to output)"
+
+[inputs.schema.properties.policy]
+type        = "object"
+description = "Optional insurance policy terms — FM layer defaults are used if absent"
+
+[inputs.schema.properties.policy.properties]
+total_insured_value_usd.type             = "number"
+total_insured_value_usd.description      = "Insured TIV (USD); defaults to 25% of total_exposed_value_usd"
+coverage_pct.type                        = "number"
+coverage_pct.minimum                     = 0
+coverage_pct.maximum                     = 1
+deductible_pct.type                      = "number"
+deductible_pct.minimum                   = 0
+deductible_pct.maximum                   = 1
+per_occurrence_limit_pct.type            = "number"
+per_occurrence_limit_pct.minimum         = 0
+per_occurrence_limit_pct.maximum         = 1
+
+# ---------------------------------------------------------------------------
+# Output: insured_losses
+# Insured loss distribution after applying FM policy terms.
+# Consumed by FinancePy to price a catastrophe bond referencing this loss layer.
+# ---------------------------------------------------------------------------
+[[outputs]]
+name        = "insured_losses"
+description = "Insured loss distribution after OasisLMF FM: AAL, EP curve, per-event insured losses"
+
+[outputs.schema]
+type     = "object"
+required = ["insured_aai_usd", "insured_loss_exceedance_curve", "event_insured_loss_table"]
+
+properties.scenario.type                        = "string"
+properties.total_exposed_value_usd.type         = "number"
+properties.total_insured_value_usd.type         = "number"
+properties.total_insured_value_usd.description  = "Insured TIV after applying FM policy layer (USD)"
+properties.insured_aai_usd.type                 = "number"
+properties.insured_aai_usd.description          = "Average Annual Insured Loss — expected loss input for FinancePy (USD)"
+properties.loss_ratio.type                      = "number"
+properties.loss_ratio.description               = "Insured AAL / TIV"
+
+[outputs.schema.properties.policy_terms]
+type = "object"
+properties.coverage_pct.type                    = "number"
+properties.deductible_pct.type                  = "number"
+properties.per_occurrence_limit_usd.type        = "number"
+properties.per_occurrence_limit_pct.type        = "number"
+
+properties.event_insured_loss_table.type        = "array"
+properties.event_insured_loss_table.description = "Per-event insured losses after FM: gross_loss_usd, insured_loss_usd, frequency, return_period_years"
+
+[outputs.schema.properties.insured_loss_exceedance_curve]
+type        = "object"
+description = "Insured-loss EP curve at standard return periods for cat bond trigger/exhaustion calibration"
+properties.return_periods_years.type = "array"
+properties.losses_usd.type           = "array"
