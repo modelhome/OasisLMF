@@ -64,7 +64,7 @@ per_occurrence_limit_pct.maximum         = 1
 # actually need is an entirely separate modelfile & runner to use FinancePy
 # in the manner needed for this flow. Still sorting that out -JM 3/18/26
 # name        = "insured_losses"
-name        = "insured_losses"
+name        = "damage_estimates"
 description = "Insured loss distribution after OasisLMF FM: AAL, EP curve, per-event insured losses"
 
 [outputs.schema]
