@@ -58,6 +58,12 @@ per_occurrence_limit_pct.maximum         = 1
 # Consumed by FinancePy to price a catastrophe bond referencing this loss layer.
 # ---------------------------------------------------------------------------
 [[outputs]]
+# insured_losses is the better name for the output, but because the flow
+# I'm testing with is feeding this to FinancePy, and that currently
+# expects the name to be damage_estimates, swithing to that. What this may
+# actually need is an entirely separate modelfile & runner to use FinancePy
+# in the manner needed for this flow. Still sorting that out -JM 3/18/26
+# name        = "insured_losses"
 name        = "insured_losses"
 description = "Insured loss distribution after OasisLMF FM: AAL, EP curve, per-event insured losses"
 
