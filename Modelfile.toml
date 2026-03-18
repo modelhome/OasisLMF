@@ -2,7 +2,7 @@ name        = "oasislmf"
 description = "Applies the OasisLMF Financial Module (FM) to CLIMADA ground-up hurricane losses. Converts an event loss table into insured loss distributions by applying policy terms (coverage fraction, per-occurrence deductible, per-occurrence limit). Outputs an insured Average Annual Loss and exceedance probability curve suitable for catastrophe bond pricing with FinancePy."
 image       = "model-home/oasislmf:latest"
 
-run  = "docker run --rm -v \"$PWD/run:/run\" ${IMAGE} ${ARGS} > run/insured_losses.output.json"
+run  = "docker run --rm -v \"$PWD/run:/run\" ${IMAGE} ${ARGS} > run/damage_estimates.output.json"
 args = ["{input:hurricane_losses}"]
 
 # ---------------------------------------------------------------------------
