@@ -56,7 +56,7 @@ import numpy as np
 import pandas as pd
 import pytz
 import chardet
-from chardet.universaldetector import UniversalDetector
+from chardet import UniversalDetector
 from tabulate import tabulate
 
 from oasislmf.utils.defaults import SOURCE_IDX, SAR_ID
@@ -169,16 +169,16 @@ DEFAULT_LOC_FIELD_TYPES = [{'field_col': 'BIWaitingPeriod',
 
 DEFAULT_ADDITIONAL_FIELDS = {
     'Loc': {
-        'acc_id': {'pd_dtype': 'Int64'},
-        'loc_id': {'pd_dtype': 'Int64'},
-        'loc_idx': {'pd_dtype': 'Int64'},
-        'BIWaitingPeriodType': {'pd_dtype': 'Int8'},
-        'BIPOIType': {'pd_dtype': 'Int8'}
+        'acc_id': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'},
+        'loc_id': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'},
+        'loc_idx': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'},
+        'BIWaitingPeriodType': {'pd_dtype': 'Int8', 'pa_dtype': 'int64[pyarrow]'},
+        'BIPOIType': {'pd_dtype': 'Int8', 'pa_dtype': 'int64[pyarrow]'}
     },
     'Acc': {
-        'acc_id': {'pd_dtype': 'Int64'},
-        'acc_idx': {'pd_dtype': 'Int64'},
-        'layer_id': {'pd_dtype': 'Int64'}
+        'acc_id': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'},
+        'acc_idx': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'},
+        'layer_id': {'pd_dtype': 'Int64', 'pa_dtype': 'int64[pyarrow]'}
     },
     'ReinsInfo': {
     },
@@ -690,12 +690,21 @@ def get_timestamp(thedate=datetime.now(), fmt='%Y%m%d%H%M%S'):
     return thedate.strftime(fmt)
 
 
-def get_utctimestamp(thedate=datetime.utcnow(), fmt='%Y-%b-%d %H:%M:%S'):
+def get_utctimestamp(thedate=None, fmt='%Y-%b-%d %H:%M:%S'):
     """
-    Get a UTC timestamp string from a ``datetime.datetime`` object
+    Get a UTC timestamp string from a ``datetime.datetime`` object.
 
-    :param thedate: ``datetime.datetime`` object
-    :type thedate: datetime.datetime
+    When ``thedate`` is omitted, the current UTC time is used. A naive
+    ``datetime`` (no ``tzinfo``) is interpreted as UTC, matching the
+    function's name; a tz-aware ``datetime`` is converted to UTC before
+    formatting. This avoids the CPython gotcha that
+    ``naive.astimezone(utc)`` interprets naive datetimes as *local*
+    time, which caused run-directory timestamps to drift by the local
+    UTC offset on non-UTC hosts (issue #1936).
+
+    :param thedate: ``datetime.datetime`` object. If ``None`` (the
+        default), ``datetime.now(pytz.utc)`` is used.
+    :type thedate: datetime.datetime or None
 
     :param fmt: Timestamp format string, default is "%Y-%b-%d %H:%M:%S"
     :type fmt: str
@@ -703,6 +712,10 @@ def get_utctimestamp(thedate=datetime.utcnow(), fmt='%Y-%b-%d %H:%M:%S'):
     :return: UTC timestamp string
     :rtype: str
     """
+    if thedate is None:
+        thedate = datetime.now(pytz.utc)
+    elif thedate.tzinfo is None:
+        thedate = thedate.replace(tzinfo=pytz.utc)
     return thedate.astimezone(pytz.utc).strftime(fmt)
 
 
@@ -870,7 +883,8 @@ def get_exposure_data(computation_step, add_internal_col=False):
             if hasattr(computation_step, 'oasis_files_dir') and Path(computation_step.oasis_files_dir, OedExposure.DEFAULT_EXPOSURE_CONFIG_NAME).is_file():
                 logger.debug(f"Exposure data is read from {Path(computation_step.oasis_files_dir, OedExposure.DEFAULT_EXPOSURE_CONFIG_NAME)}")
                 exposure_data = OedExposure.from_config(Path(computation_step.oasis_files_dir, OedExposure.DEFAULT_EXPOSURE_CONFIG_NAME),
-                                                        additional_fields=DEFAULT_ADDITIONAL_FIELDS)
+                                                        additional_fields=DEFAULT_ADDITIONAL_FIELDS,
+                                                        backend_dtype=getattr(computation_step, 'oed_backend_dtype', None))
             elif hasattr(computation_step, 'get_exposure_data_config'):  # if computation step input specify ExposureData config
                 logger.debug("Exposure data is generated from `get_exposure_data_config` key of computation kwargs")
                 data_config = computation_step.get_exposure_data_config()
