@@ -15,6 +15,13 @@ args = ["{input:hurricane_losses}"]
 #   policy.per_occurrence_limit_pct  — per-event limit as fraction of TIV (default: 0.25)
 # ---------------------------------------------------------------------------
 
+[runner]
+entrypoint = "runner.py"
+language = "python"
+
+[build]
+dockerfile = "Dockerfile"
+
 [resources]
 memory = "4Gi"
 cpu = "2"
