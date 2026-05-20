@@ -89,15 +89,15 @@ properties.insured_aai_usd.description          = "Average Annual Insured Loss â
 properties.loss_ratio.type                      = "number"
 properties.loss_ratio.description               = "Insured AAL / TIV"
 
+properties.event_insured_loss_table.type        = "array"
+properties.event_insured_loss_table.description = "Per-event insured losses after FM: gross_loss_usd, insured_loss_usd, frequency, return_period_years"
+
 [outputs.schema.properties.policy_terms]
 type = "object"
 properties.coverage_pct.type                    = "number"
 properties.deductible_pct.type                  = "number"
 properties.per_occurrence_limit_usd.type        = "number"
 properties.per_occurrence_limit_pct.type        = "number"
-
-properties.event_insured_loss_table.type        = "array"
-properties.event_insured_loss_table.description = "Per-event insured losses after FM: gross_loss_usd, insured_loss_usd, frequency, return_period_years"
 
 [outputs.schema.properties.insured_loss_exceedance_curve]
 type        = "object"
