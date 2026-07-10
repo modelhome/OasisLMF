@@ -78,7 +78,7 @@ description = "Insured loss distribution after OasisLMF FM: AAL, EP curve, per-e
 
 [outputs.schema]
 type     = "object"
-required = ["insured_aai_usd", "insured_loss_exceedance_curve", "event_insured_loss_table"]
+required = ["insured_aai_usd", "total_insured_value_usd", "insured_loss_exceedance_curve", "event_insured_loss_table"]
 
 properties.scenario.type                        = "string"
 properties.total_exposed_value_usd.type         = "number"
